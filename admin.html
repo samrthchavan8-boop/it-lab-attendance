@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poona College - Admin Attendance Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            text-align: center;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px;
+        }
+        .btn-danger {
+            background-color: #dc3545;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        #loginOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .login-box input {
+            padding: 10px;
+            margin: 10px 0;
+            width: 80%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Password Protection Overlay -->
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h3>IT Lab Admin Login</h3>
+            <p>Enter Admin Password</p>
+            <input type="password" id="adminPassword" placeholder="Password">
+            <br>
+            <button class="btn" onclick="verifyPassword()">Login</button>
+        </div>
+    </div>
+
+    <div class="container" id="adminContent" style="display:none;">
+        <h2>IT Lab Admin Attendance Dashboard</h2>
+        <p>Poona College of Arts, Science and Commerce</p>
+        
+        <div>
+            <button class="btn" onclick="loadAdminData()">Refresh Records</button>
+            <button class="btn" onclick="exportToExcel()">Export to Excel</button>
+            <button class="btn btn-danger" onclick="clearRecords()">Clear Lab Records</button>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>PC Number</th>
+                    <th>Student Roll No / ID</th>
+                    <th>Check-In Time</th>
+                </tr>
+            Refinement
+            </thead>
+            <tbody id="attendanceTableBody">
+                <tr>
+                    <td colspan="3">Loading records...</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <br>
+        <a href="index.html" style="text-decoration: none; color: #007bff; font-weight: bold;">← Back to Seating Portal</a>
+    </div>
+
+    <script>
+        function verifyPassword() {
+            const pass = document.getElementById('adminPassword').value;
+            if (pass === 'poona2026') {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('adminContent').style.display = 'block';
+                loadAdminData();
+            } else {
+                alert('Incorrect password! Access denied.');
+            }
+        }
+
+        async function loadAdminData() {
+            try {
+                const res = await fetch('/api/attendance');
+                const records = await res.json();
+                const tbody = document.getElementById('attendanceTableBody');
+                tbody.innerHTML = '';
+
+                if (records.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="3">No check-ins recorded yet.</td></tr>`;
+                    return;
+                }
+
+                records.forEach(rec => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>PC ${rec.pc_number}</td>
+                        <td>${rec.student_id}</td>
+                        <td>${rec.timestamp || 'Just now'}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                console.error('Error loading records', err);
+            }
+        }
+
+        async function clearRecords() {
+            if (confirm('Are you sure you want to clear all lab attendance records?')) {
+                const res = await fetch('/api/clear', { method: 'POST' });
+                if (res.ok) {
+                    alert('All records cleared successfully.');
+                    loadAdminData();
+                } else {
+                    alert('Failed to clear records.');
+                }
+            }
+        }
+
+        function exportToExcel() {
+            let table = document.querySelector('table');
+            let html = table.outerHTML;
+            let url = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
+            let downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = 'IT_Lab_Attendance.xls';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>
