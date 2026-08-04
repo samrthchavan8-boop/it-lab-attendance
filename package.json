@@ -1,0 +1,13 @@
+{
+  "name": "it-lab-attendance",
+  "version": "1.0.0",
+  "description": "IT Lab Attendance and Seating Portal",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "sqlite3": "^5.1.7"
+  }
+}
